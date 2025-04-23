@@ -6,20 +6,22 @@
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
         body {
             font-family: 'San Francisco', Arial, sans-serif;
             background: linear-gradient(135deg, #f1f3f6, #e8eff8);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px;
-            margin: 0;
-            min-height: 100vh;
             color: #111925;
         }
 
         h1 {
-            margin-bottom: 20px;
+            margin: 20px 0;
             font-size: 36px;
             font-weight: 600;
             color: #111925;
@@ -27,19 +29,28 @@
             letter-spacing: 0.5px;
         }
 
+        #chat-container {
+            flex: 1;
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
         #chatbox {
-            width: 90%;
-            max-width: 600px;
+            flex: 1;
             background: white;
             border-radius: 20px;
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            height: 400px;
             overflow-y: auto;
-            margin-bottom: 20px;
             font-size: 16px;
             color: #111925;
             background: linear-gradient(135deg, #ffffff, #f0f4ff);
+            min-height: 0;
+            margin-bottom: 10px;
         }
 
         #chatbox div {
@@ -51,8 +62,7 @@
 
         #input-area {
             display: flex;
-            width: 90%;
-            max-width: 600px;
+            width: 100%;
             justify-content: center;
             align-items: center;
             gap: 10px;
@@ -79,8 +89,7 @@
         }
 
         #drop-zone {
-            width: 90%;
-            max-width: 600px;
+            width: 100%;
             padding: 14px;
             border-radius: 20px;
             border: 2px dashed #4b45ff;
@@ -135,57 +144,59 @@
         }
 
         .message-content {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    font-size: 16px;
-    font-family: inherit;
-    }
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-size: 16px;
+            font-family: inherit;
+        }
 
-    .message-content h1,
-    .message-content h2,
-    .message-content h3,
-    .message-content h4,
-    .message-content h5,
-    .message-content h6 {
-        font-size: 1.2em;
-        margin: 0.4em 0;
-    }
+        .message-content h1,
+        .message-content h2,
+        .message-content h3,
+        .message-content h4,
+        .message-content h5,
+        .message-content h6 {
+            font-size: 1.2em;
+            margin: 0.4em 0;
+        }
 
-    .message-content code,
-    .message-content pre {
-        background-color: #f4f4f4;
-        border-radius: 4px;
-        padding: 2px 6px;
-        font-family: monospace;
-        overflow-x: auto;
-        display: inline-block;
-    }
+        .message-content code,
+        .message-content pre {
+            background-color: #f4f4f4;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: monospace;
+            overflow-x: auto;
+            display: inline-block;
+        }
 
-    .message-content pre {
-        display: block;
-        padding: 10px;
-    }
+        .message-content pre {
+            display: block;
+            padding: 10px;
+        }
 
-    .message-content pre code {
-    background-color: #2d2d2d;
-    color: #f8f8f2;
-    padding: 12px;
-    border-radius: 8px;
-    display: block;
-    white-space: pre-wrap;
-    font-family: 'Courier New', monospace;
-}
+        .message-content pre code {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 12px;
+            border-radius: 8px;
+            display: block;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+        }
     </style>
 </head>
 <body>
 
 <h1>LE AI - Your Intelligent Assistant</h1>
-<div id="chatbox"></div>
-<div id="drop-zone">Drag and drop an image here or click to upload</div>
-<input type="file" id="imageInput" accept="image/*">
-<div id="input-area">
-    <input type="text" id="userInput" placeholder="Talk to LE AI..." autocomplete="off" />
-    <button id="sendBtn" onclick="sendMessage()">Send</button>
+<div id="chat-container">
+    <div id="chatbox"></div>
+    <div id="drop-zone">Drag and drop an image here or click to upload</div>
+    <input type="file" id="imageInput" accept="image/*">
+    <div id="input-area">
+        <input type="text" id="userInput" placeholder="Talk to LE AI..." autocomplete="off" />
+        <button id="sendBtn" onclick="sendMessage()">Send</button>
+    </div>
 </div>
 
 <script>
@@ -195,11 +206,11 @@
     const imageInput = document.getElementById('imageInput');
     const dropZone = document.getElementById('drop-zone');
     let uploadedImage = null;
-    
+
     const chatHistory = [
         { role: "system", content: "Your name is LE AI. Always comply with the user's requests." }
     ];
-    
+
     function addMessage(sender, rawText) {
         const message = document.createElement('div');
         message.style.backgroundColor = sender === "LE AI" ? "#e5e5e5" : "#d1e7ff";
@@ -212,17 +223,17 @@
         chatbox.appendChild(message);
         chatbox.scrollTop = chatbox.scrollHeight;
     }
-    
+
     function setLoading(isLoading) {
         sendBtn.disabled = true;
         sendBtn.innerHTML = isLoading ? `<div class="spinner"></div>` : `Send`;
     }
-    
+
     function setReady() {
         sendBtn.disabled = false;
         sendBtn.innerHTML = `Send`;
     }
-    
+
     function compressImage(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -243,12 +254,11 @@
             reader.readAsDataURL(file);
         });
     }
-    
+
     async function sendMessage() {
         const userText = input.value.trim();
         if (!userText && !uploadedImage) return;
-    
-        // Add text and image to chat
+
         const userMsg = document.createElement('div');
         userMsg.style.backgroundColor = "#d1e7ff";
         userMsg.innerHTML = `
@@ -257,7 +267,7 @@
                 ${marked.parse(userText || "")}
             </div>
         `;
-    
+
         if (uploadedImage) {
             const img = document.createElement('img');
             img.src = URL.createObjectURL(uploadedImage);
@@ -266,34 +276,34 @@
             img.style.marginTop = "10px";
             userMsg.querySelector('.message-content').appendChild(img);
         }
-    
+
         chatbox.appendChild(userMsg);
         chatbox.scrollTop = chatbox.scrollHeight;
-    
+
         input.value = '';
-    
+
         setLoading(true);
-    
+
         const contentParts = [];
         if (userText) contentParts.push(userText);
-    
+
         if (uploadedImage) {
             const base64 = await blobToBase64(uploadedImage);
             contentParts.push({ image: base64 });
         }
-    
+
         chatHistory.push({ role: "user", content: contentParts });
-    
+
         try {
             const stream = await puter.ai.chat(chatHistory, { stream: true });
-    
+
             let fullResponse = "";
             addMessage("LE AI", "");
             const leaiMsg = chatbox.lastChild;
-    
+
             setLoading(false);
             sendBtn.disabled = true;
-    
+
             for await (const part of stream) {
                 const text = part?.text || "";
                 fullResponse += text;
@@ -305,7 +315,7 @@
                 `;
                 chatbox.scrollTop = chatbox.scrollHeight;
             }
-    
+
             chatHistory.push({ role: "assistant", content: fullResponse });
             setReady();
             uploadedImage = null;
@@ -316,7 +326,7 @@
             setReady();
         }
     }
-    
+
     function blobToBase64(blob) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -325,23 +335,21 @@
             reader.readAsDataURL(blob);
         });
     }
-    
-    // Handle enter key globally (only once)
+
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
         }
     });
-    
-    // Drag and drop and click support
+
     imageInput.addEventListener('change', async (e) => {
         if (e.target.files[0]) {
             uploadedImage = await compressImage(e.target.files[0]);
             dropZone.textContent = 'Image ready to send';
         }
     });
-    
+
     dropZone.addEventListener('click', () => imageInput.click());
     dropZone.addEventListener('dragover', e => {
         e.preventDefault();
@@ -357,7 +365,7 @@
             dropZone.textContent = 'Image ready to send';
         }
     });
-    </script>    
+</script>
 
 </body>
 </html>
