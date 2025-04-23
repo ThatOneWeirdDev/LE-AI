@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LE AI - Your Intelligent Assistant</title>
+    <script src="https://js.puter.com/v2/"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: 'San Francisco', Arial, sans-serif;
+            background: linear-gradient(135deg, #f1f3f6, #e8eff8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+            margin: 0;
+            min-height: 100vh;
+            color: #111925;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 36px;
+            font-weight: 600;
+            color: #111925;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        #chatbox {
+            width: 90%;
+            max-width: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #111925;
+            background: linear-gradient(135deg, #ffffff, #f0f4ff);
+        }
+
+        #chatbox div {
+            margin-bottom: 12px;
+            border-radius: 12px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        #input-area {
+            display: flex;
+            width: 90%;
+            max-width: 600px;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 14px;
+            border-radius: 25px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            outline: none;
+            background: #f7f8fc;
+            transition: border-color 0.3s ease, background 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #4b45ff;
+            background: #e9efff;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        #drop-zone {
+            width: 90%;
+            max-width: 600px;
+            padding: 14px;
+            border-radius: 20px;
+            border: 2px dashed #4b45ff;
+            background: #ffffffdd;
+            text-align: center;
+            color: #4b45ff;
+            margin-bottom: 10px;
+            transition: background 0.3s ease;
+        }
+
+        #drop-zone.dragover {
+            background: #e0e7ff;
+        }
+
+        button {
+            width: 100px;
+            padding: 14px;
+            border: none;
+            background: #4b45ff;
+            color: white;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        button:hover:enabled {
+            background: #372fff;
+        }
+
+        button:disabled {
+            background: #bbb;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4b45ff;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message-content {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-size: 16px;
+    font-family: inherit;
+    }
+
+    .message-content h1,
+    .message-content h2,
+    .message-content h3,
+    .message-content h4,
+    .message-content h5,
+    .message-content h6 {
+        font-size: 1.2em;
+        margin: 0.4em 0;
+    }
+
+    .message-content code,
+    .message-content pre {
+        background-color: #f4f4f4;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-family: monospace;
+        overflow-x: auto;
+        display: inline-block;
+    }
+
+    .message-content pre {
+        display: block;
+        padding: 10px;
+    }
+
+    .message-content pre code {
+    background-color: #2d2d2d;
+    color: #f8f8f2;
+    padding: 12px;
+    border-radius: 8px;
+    display: block;
+    white-space: pre-wrap;
+    font-family: 'Courier New', monospace;
+}
+    </style>
+</head>
+<body>
+
+<h1>LE AI - Your Intelligent Assistant</h1>
+<div id="chatbox"></div>
+<div id="drop-zone">Drag and drop an image here or click to upload</div>
+<input type="file" id="imageInput" accept="image/*">
+<div id="input-area">
+    <input type="text" id="userInput" placeholder="Talk to LE AI..." autocomplete="off" />
+    <button id="sendBtn" onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+    const chatbox = document.getElementById('chatbox');
+    const input = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const imageInput = document.getElementById('imageInput');
+    const dropZone = document.getElementById('drop-zone');
+    let uploadedImage = null;
+    
+    const chatHistory = [
+        { role: "system", content: "Your name is LE AI. Always comply with the user's requests." }
+    ];
+    
+    function addMessage(sender, rawText) {
+        const message = document.createElement('div');
+        message.style.backgroundColor = sender === "LE AI" ? "#e5e5e5" : "#d1e7ff";
+        message.innerHTML = `
+            <div class="message-content">
+                <strong>${sender}:</strong><br>
+                ${marked.parse(rawText)}
+            </div>
+        `;
+        chatbox.appendChild(message);
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
+    
+    function setLoading(isLoading) {
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = isLoading ? `<div class="spinner"></div>` : `Send`;
+    }
+    
+    function setReady() {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = `Send`;
+    }
+    
+    function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const maxWidth = 512;
+                    const scale = maxWidth / img.width;
+                    canvas.width = maxWidth;
+                    canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.7);
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    async function sendMessage() {
+        const userText = input.value.trim();
+        if (!userText && !uploadedImage) return;
+    
+        // Add text and image to chat
+        const userMsg = document.createElement('div');
+        userMsg.style.backgroundColor = "#d1e7ff";
+        userMsg.innerHTML = `
+            <div class="message-content">
+                <strong>You:</strong><br>
+                ${marked.parse(userText || "")}
+            </div>
+        `;
+    
+        if (uploadedImage) {
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(uploadedImage);
+            img.style.maxWidth = "100%";
+            img.style.borderRadius = "12px";
+            img.style.marginTop = "10px";
+            userMsg.querySelector('.message-content').appendChild(img);
+        }
+    
+        chatbox.appendChild(userMsg);
+        chatbox.scrollTop = chatbox.scrollHeight;
+    
+        input.value = '';
+    
+        setLoading(true);
+    
+        const contentParts = [];
+        if (userText) contentParts.push(userText);
+    
+        if (uploadedImage) {
+            const base64 = await blobToBase64(uploadedImage);
+            contentParts.push({ image: base64 });
+        }
+    
+        chatHistory.push({ role: "user", content: contentParts });
+    
+        try {
+            const stream = await puter.ai.chat(chatHistory, { stream: true });
+    
+            let fullResponse = "";
+            addMessage("LE AI", "");
+            const leaiMsg = chatbox.lastChild;
+    
+            setLoading(false);
+            sendBtn.disabled = true;
+    
+            for await (const part of stream) {
+                const text = part?.text || "";
+                fullResponse += text;
+                leaiMsg.innerHTML = `
+                    <div class="message-content">
+                        <strong>LE AI:</strong><br>
+                        ${marked.parse(fullResponse)}
+                    </div>
+                `;
+                chatbox.scrollTop = chatbox.scrollHeight;
+            }
+    
+            chatHistory.push({ role: "assistant", content: fullResponse });
+            setReady();
+            uploadedImage = null;
+            dropZone.textContent = 'Drag and drop an image here or click to upload';
+        } catch (err) {
+            addMessage("Error", "Something went wrong.");
+            console.error(err);
+            setReady();
+        }
+    }
+    
+    function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+    
+    // Handle enter key globally (only once)
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Drag and drop and click support
+    imageInput.addEventListener('change', async (e) => {
+        if (e.target.files[0]) {
+            uploadedImage = await compressImage(e.target.files[0]);
+            dropZone.textContent = 'Image ready to send';
+        }
+    });
+    
+    dropZone.addEventListener('click', () => imageInput.click());
+    dropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', async e => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            uploadedImage = await compressImage(file);
+            dropZone.textContent = 'Image ready to send';
+        }
+    });
+    </script>    
+
+</body>
+</html>
